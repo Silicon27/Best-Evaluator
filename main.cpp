@@ -14,28 +14,47 @@ bool isNumeric(const std::string& str) {
 }
 
 bool isOperator(const std::string& str) {
-    if (str == "+" || str == "-" || str == "*" || str == "/" || str == "**") {
-        return true;
-    }
+    if (str == "+" || str == "-" || str == "*" || str == "/" || str == "**")    return true;
     return false;
 }
 
+bool isUnaryOperator(const std::string& str) {
+    if (str == "!" || str == "~") return true;
+    return false;
+}
 
 class Evaluator {
 public:
     explicit Evaluator(std::string  expression) : expression_(std::move(expression)) {}
 
     [[nodiscard]] static int precedence(const std::string& op) {
-        if (op == "||") return 0;
-        if (op == "&&") return 1;
-        if (op == "==" || op == "!=") return 2;
-        if (op == "<" || op == ">" || op == "<=" || op == ">=") return 3;
-        if (op == "+" || op == "-") return 4;
-        if (op == "*" || op == "/") return 5;
-        if (op == "**") return 6;  // highest arithmetic precedence
-        if (op == "!") return 7;   // logical NOT
+        if (op == ",")        return 0;
+        if (op == "="  || op == "+=" || op == "-=" || op == "*=" ||
+            op == "/=" || op == "%=" || op == "<<="|| op == ">>="||
+            op == "&=" || op == "^=" || op == "|=")     return 1;
+        if (op == "?:")       return 2;
+        if (op == "||" || op == "or")       return 3;
+        if (op == "&&" || op == "and")       return 4;
+        if (op == "|" )       return 5;
+        if (op == "^" )       return 6;
+        if (op == "&" )       return 7;
+        if (op == "==" || op == "!=") return 8;
+        if (op == "<"  || op == "<="|| op == ">" || op == ">=") return 9;
+        if (op == "<<" || op == ">>") return 10;
+        if (op == "+"  || op == "-")  return 11;
+        if (op == "*"  || op == "/" || op == "%") return 12;
+        if (op == "**")       return 13;   // if you implement exponentiation
+        if (op == "!"  || op == "~"   ||
+            op == "u+" || op == "u-"  || // you might encode unary +/− as separate tokens
+            op == "++" || op == "--"  ||
+            op == "sizeof" || op == "new" || op == "delete")
+            return 14;
+        if (op == "()" || op == "[]" || op == "->" || op == "."
+                              || op == "p++" || op == "p--")     // encode postfix ++/-- if you like
+                                  return 15;
         return -1; // Unknown operator
     }
+
 
 
     [[nodiscard]] Postfix getPostfix() const {
@@ -103,6 +122,15 @@ public:
             if (isNumeric(postfixQueue_.front())) {
                 postfixStack_.emplace(postfixQueue_.front());
                 postfixQueue_.pop();
+            } else if (isUnaryOperator(postfixQueue_.front())) {
+                std::string op = postfixQueue_.front();
+                postfixQueue_.pop();
+                int num = std::stoi(postfixStack_.top());
+                if (op == "!") {
+                    if (num == 0) postfixStack_.emplace("1");
+                    else if (num == 1) postfixStack_.emplace("0");
+                    else throw std::runtime_error("Invalid integer literal for logical not unary operator");
+                }
             } else if (isOperator(postfixQueue_.front())) {
                 std::string op = postfixQueue_.front();
                 postfixQueue_.pop();
@@ -126,11 +154,6 @@ public:
                     const int right = std::stoi(postfixStack_.top()); postfixStack_.pop();
                     const int left = std::stoi(postfixStack_.top()); postfixStack_.pop();
                     postfixStack_.emplace(std::to_string(std::pow(left, right)));
-                } else if (op == "!") {
-                    const int current = std::stoi(postfixStack_.top()); postfixStack_.pop();
-                    if (current == 1) postfixStack_.emplace("0");
-                    else if (current == 0) postfixStack_.emplace("1");
-                    else throw std::runtime_error("Value has to be true (1) or false (0)");
                 }
             }
         }
@@ -147,7 +170,7 @@ private:
 
 
 int main() {
-    Evaluator eval("!0"); // ensure to validate expression before usage
+    Evaluator eval("!0 + 2"); // ensure to validate expression before usage
     eval.generatePostfix();
     std::queue<std::string> postfixQueue = eval.getPostfixQueue();
     size_t postfixQueueSize = postfixQueue.size();
