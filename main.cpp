@@ -43,9 +43,9 @@ public:
         if (op == "<<" || op == ">>") return 10;
         if (op == "+"  || op == "-")  return 11;
         if (op == "*"  || op == "/" || op == "%") return 12;
-        if (op == "**")       return 13;   // if you implement exponentiation
+        if (op == "**")       return 13;
         if (op == "!"  || op == "~"   ||
-            op == "u+" || op == "u-"  || // you might encode unary +/− as separate tokens
+            op == "u+" || op == "u-"  ||
             op == "++" || op == "--"  ||
             op == "sizeof" || op == "new" || op == "delete")
             return 14;
@@ -172,14 +172,7 @@ private:
 int main() {
     Evaluator eval("!0 + 2"); // ensure to validate expression before usage
     eval.generatePostfix();
-    std::queue<std::string> postfixQueue = eval.getPostfixQueue();
-    size_t postfixQueueSize = postfixQueue.size();
-    for (size_t i = 0; i < postfixQueueSize; ++i) {
-        std::cout << postfixQueue.front() << " ";
-        postfixQueue.pop();
-    }
     eval.evaluatePostfix();
-    std::cout << std::endl;
     std::cout << eval.getPostfix().expression << std::endl;
     return 0;
 }
